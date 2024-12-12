@@ -15,7 +15,7 @@ class ListNode:
         self.val = val
         self.next = next
 
-class LeetCodeInputGenerator:
+class ArgumentGenerator:
     def __init__(self, seed=None):
         if seed is not None:
             random.seed(seed)
