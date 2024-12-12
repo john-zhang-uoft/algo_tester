@@ -6,12 +6,12 @@ setup(
     description='A project that includes algo_tester and argument_generator',
     author='John Zhang',
     author_email='johnzhanguoft@gmail.com',
-    packages=find_packages(where='src'),  # Finds all packages in src
-    package_dir={'': 'src'},              # Tells setuptools that packages are under src
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
     python_requires='>=3.6',
     install_requires=[
-        'matplotlib',
-        'statistics; python_version<"3.8"',  # statistics is in Python 3.8+, just example
+        'matplotlib>3.0',
+        'statistics; python_version<"3.8"',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
