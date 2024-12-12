@@ -1,5 +1,5 @@
-from algo_tester import AlgorithmTester
-from argument_generator import ArgumentGenerator
+from algo_tester.algo_tester import AlgorithmTester
+from algo_tester.argument_generator import ArgumentGenerator
 
 # Example Algorithm: Sort a list
 # We will use Python's built-in sort for demonstration, but you can replace this with any function.
@@ -9,8 +9,8 @@ def my_algorithm(arr):
 
 if __name__ == "__main__":
     # Initialize the classes
-    tester = AlgorithmTester()
     gen = ArgumentGenerator(seed=42)  # seed for reproducibility
+    tester = AlgorithmTester()
 
     # 1. Correctness Testing
     # Define some test cases. Each test case is a tuple ((args...), expected_output).
@@ -40,7 +40,6 @@ if __name__ == "__main__":
         return gen.generate_int_list(n=n, min_val=0, max_val=1000, unique=False)
 
     print("\n=== Estimating Complexity ===")
-    tester = AlgorithmTester()
     best_fit, fig = tester.estimate_complexity(my_algorithm, generate_plot=True)
     print("Estimated Complexity:", best_fit)
     # Save figure
