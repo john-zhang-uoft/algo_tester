@@ -1,6 +1,11 @@
 import time
 import math
 import statistics
+import matplotlib
+
+matplotlib.use('Agg')  # Use a non-interactive backend
+
+import matplotlib.pyplot as plt
 
 class AlgorithmTester:
     """
@@ -44,22 +49,34 @@ class AlgorithmTester:
         else:
             print("Some test cases failed.")
 
-    def estimate_complexity(self, func, input_sizes, args_generator, num_runs=5):
+    def estimate_complexity(self, func, input_sizes=None, args_generator=None, num_runs=5, generate_plot=False):
         """
         Estimate the complexity of a function by measuring how the runtime scales with input size.
         
         Parameters:
         - func: The function whose complexity we want to estimate.
-        - input_sizes: A list of input sizes (e.g., [100, 200, 400, ...]).
+        - input_sizes: A list of input sizes (e.g., [100, 200, 400, ...]). If None, uses a default set.
         - args_generator: A callable that takes an input size and returns a tuple of arguments 
                           for the function.
         - num_runs: How many times to run each measurement for averaging.
-
+        - generate_plot: If True, also generate a plot comparing actual runtimes vs. best-fit complexity.
+        
         Returns:
-        - A string representing the best guess of the complexity class from a predefined set.
+        - best_fit (str) if generate_plot=False
+        - (best_fit (str), fig (matplotlib figure)) if generate_plot=True
         """
 
-        # Extended set of complexities to attempt:
+        if input_sizes is None:
+            # Default set of input sizes
+            input_sizes = [100, 200, 400, 800, 1600]
+
+        # Provide a default args_generator if none is given
+        if args_generator is None:
+            # Default: generate a list of integers of size n
+            def default_args_generator(n):
+                return ([0]*n,)
+            args_generator = default_args_generator
+
         complexity_functions = {
             "O(1)":        lambda n: 1,
             "O(log n)":    lambda n: math.log(n) if n > 1 else 0,
@@ -68,14 +85,13 @@ class AlgorithmTester:
             "O(n log n)":  lambda n: n * math.log(n) if n > 1 else 0,
             "O(n²)":       lambda n: n**2,
             "O(n³)":       lambda n: n**3,
-            "O(2^n)":      lambda n: 2**n if n < 30 else float('inf'),  # limited to smaller n due to large values
+            "O(2^n)":      lambda n: 2**n if n < 30 else float('inf'),  # limited due to large values
         }
 
         times = []
-        # Run the function for each input size and measure time
+        # Measure runtime for each input size
         for n in input_sizes:
             run_times = []
-            # Generate arguments using the provided generator
             args = args_generator(n)
             for _ in range(num_runs):
                 start = time.perf_counter()
@@ -88,6 +104,8 @@ class AlgorithmTester:
         # Attempt to fit times to complexity forms using a least squares approach
         best_fit = None
         best_error = float("inf")
+        best_c = None
+        best_func = None
 
         for label, f_complex in complexity_functions.items():
             f_values = [f_complex(n) for n in input_sizes]
@@ -98,7 +116,8 @@ class AlgorithmTester:
                 error = sum((t - c)**2 for t in times)
             else:
                 # Filter out infinite or NaN values (for large n in O(2^n))
-                valid_pairs = [(t, fv) for t, fv in zip(times, f_values) if math.isfinite(fv) and fv != 0]
+                valid_pairs = [(t, fv) for t, fv in zip(times, f_values) 
+                               if math.isfinite(fv) and fv != 0]
                 if not valid_pairs:
                     continue
                 t_vals, fv_vals = zip(*valid_pairs)
@@ -115,5 +134,28 @@ class AlgorithmTester:
             if error < best_error:
                 best_error = error
                 best_fit = label
+                best_c = c if 'c' in locals() else None
+                best_func = f_complex
 
-        return best_fit
+        if not generate_plot:
+            return best_fit
+        else:
+            # Generate a plot of the runtimes and the best fit line
+            fig, ax = plt.subplots()
+
+            # Plot measured times
+            ax.scatter(input_sizes, times, color='blue', label='Measured Times')
+
+            # Plot best fit complexity line
+            if best_fit is not None and best_func is not None and best_c is not None:
+                fitted_values = [best_c * best_func(n) for n in input_sizes]
+                ax.plot(input_sizes, fitted_values, color='red', label=f'Best Fit: {best_fit}')
+
+            ax.set_xlabel('Input Size (n)')
+            ax.set_ylabel('Time (seconds)')
+            ax.set_title('Runtime vs. Input Size')
+            ax.legend()
+            ax.grid(True)
+
+            # Return best_fit and fig
+            return best_fit, fig
